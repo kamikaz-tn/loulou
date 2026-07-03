@@ -1,0 +1,6 @@
+# dev / local only
+.claude/
+loulou-deploy.zip
+*.log
+.DS_Store
+Thumbs.db

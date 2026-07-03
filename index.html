@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<title>LOULOU — Restaurant · Brunch · Café · Sousse</title>
+<meta name="description" content="LOULOU — restaurant, brunch et café à Sousse. Réservez une table, découvrez la carte, trouvez-nous et lisez nos avis." />
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=League+Spartan:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+/* ============================================================
+   LOULOU — theme tokens (pulled from the restaurant photos)
+   ============================================================ */
+:root{
+  --black:      #07090f;
+  --night:      #0b0f1a;
+  --navy:       #12193a;
+  --royal:      #1c2a63;
+  --gold:       #d8b46a;
+  --gold-soft:  #e8cf9a;
+  --gold-deep:  #b8923f;
+  --cream:      #efe7d6;
+  --leather:    #6e4a32;
+  --text:       #ece6d8;
+  --muted:      #9aa0b0;
+
+  --serif: "Cormorant Garamond", Georgia, serif;
+  --sans:  "Montserrat", system-ui, sans-serif;
+  --brand: "League Spartan", "Montserrat", sans-serif;   /* LOULOU wordmark only */
+  --ease: cubic-bezier(.22,.61,.36,1);
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+html,body{ background:var(--black); color:var(--text); font-family:var(--sans); }
+html{ overflow-x:clip; }
+body{ overflow-x:clip; -webkit-font-smoothing:antialiased; }
+a{ color:inherit; text-decoration:none; }
+img{ display:block; max-width:100%; }
+::selection{ background:var(--gold); color:var(--black); }
+::-webkit-scrollbar{ width:10px; }
+::-webkit-scrollbar-track{ background:var(--black); }
+::-webkit-scrollbar-thumb{ background:var(--gold-deep); border-radius:10px; }
+
+/* ============================================================
+   PRELOADER
+   ============================================================ */
+#loader{
+  position:fixed; inset:0; z-index:9999;
+  background:radial-gradient(circle at 50% 45%, #15192a 0%, var(--black) 70%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  transition:opacity .9s var(--ease), visibility .9s;
+}
+#loader.done{ opacity:0; visibility:hidden; }
+.loader-word{
+  font-family:var(--brand); font-weight:700; letter-spacing:.5em;
+  font-size:clamp(2.2rem,9vw,6rem); color:var(--cream);
+  display:flex; padding-left:.5em; text-shadow:0 0 40px rgba(216,180,106,.35);
+}
+.loader-word span{ opacity:0; transform:translateY(40px) rotateX(-90deg); display:inline-block; }
+.loader-bar{ margin-top:2.4rem; width:min(260px,60vw); height:1px; background:rgba(255,255,255,.12); position:relative; overflow:hidden; }
+.loader-bar::after{ content:""; position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg,transparent,var(--gold),transparent); animation:fill 2.2s var(--ease) forwards; }
+@keyframes fill{ to{ width:100%; } }
+.loader-sub{ margin-top:1.2rem; font-size:.62rem; letter-spacing:.45em; text-transform:uppercase; color:var(--muted); opacity:0; animation:fadeIn 1s 1s forwards; }
+@keyframes fadeIn{ to{opacity:1;} }
+
+/* ============================================================
+   NAV
+   ============================================================ */
+header.nav{
+  position:fixed; top:0; left:0; width:100%; z-index:120;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1.4rem clamp(1.2rem,4vw,3.5rem);
+}
+.nav .brand{ font-family:var(--brand); font-weight:700; letter-spacing:.42em; font-size:1.15rem; color:#fff; padding-left:.42em; mix-blend-mode:difference; }
+.nav-right{ display:flex; align-items:center; gap:clamp(1rem,2.5vw,2.6rem); }
+.nav nav{ display:flex; gap:clamp(1rem,2.5vw,2.6rem); }
+.nav nav a{ font-size:.68rem; letter-spacing:.22em; text-transform:uppercase; color:#fff; position:relative; padding:.3rem 0; opacity:.85; mix-blend-mode:difference; }
+.nav nav a::after{ content:""; position:absolute; left:0; bottom:0; width:0; height:1px; background:var(--gold); transition:width .4s var(--ease); }
+.nav nav a:hover{ opacity:1; }
+.nav nav a:hover::after{ width:100%; }
+@media (max-width:680px){ .nav nav{ display:none; } }
+
+/* language toggle */
+.lang{ display:flex; align-items:center; gap:.1rem; border:1px solid rgba(216,180,106,.4); border-radius:50px; padding:.25rem; background:rgba(7,9,15,.4); backdrop-filter:blur(6px); }
+.lang button{ background:none; border:0; cursor:pointer; font-family:var(--sans); font-size:.6rem; letter-spacing:.12em; font-weight:600; color:var(--muted); padding:.35rem .65rem; border-radius:50px; transition:.3s var(--ease); }
+.lang button.active{ background:var(--gold); color:var(--black); }
+
+/* ============================================================
+   SCENE
+   ============================================================ */
+#scene{ height:400vh; position:relative; }
+.scene-stage{ position:sticky; top:0; height:100vh; width:100%; overflow:hidden; perspective:1400px; background:var(--black); }
+
+/* WebGL depth scene canvas */
+#webgl{ position:absolute; inset:0; width:100%; height:100%; display:block; z-index:2; will-change:opacity; }
+
+.layer-interior{
+  position:absolute; inset:0; z-index:1; background:#0c1020 center/cover no-repeat;
+  background-image:linear-gradient(180deg, rgba(7,9,15,.35), rgba(7,9,15,.65)), var(--interior-img, linear-gradient(160deg,#1a2142,#0c1020 60%,#1a1410));
+  transform:scale(1.15); opacity:0; will-change:transform,opacity;
+}
+.layer-exterior{
+  position:absolute; inset:0; background:#05070d center/cover no-repeat;
+  background-image:radial-gradient(circle at 50% 34%, rgba(216,180,106,.22), transparent 45%), var(--exterior-img, linear-gradient(180deg,#0a0d16 0%,#0b1020 55%,#05070d 100%));
+  transform-origin:50% 56%; will-change:transform,clip-path,filter; clip-path:circle(140% at 50% 56%);
+}
+.layer-exterior::before{ content:""; position:absolute; inset:0; background:linear-gradient(180deg, transparent 60%, rgba(0,0,0,.6)), repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 2px, transparent 2px 60px); opacity:.5; }
+.tunnel{ position:absolute; inset:0; z-index:3; pointer-events:none; opacity:0; background:radial-gradient(circle at 50% 56%, transparent 20%, rgba(0,0,0,.85) 75%); will-change:opacity; }
+.door-hint{ position:absolute; left:50%; top:56%; transform:translate(-50%,-50%); width:120px; height:200px; border-radius:60px; box-shadow:0 0 80px 30px rgba(216,180,106,.18); pointer-events:none; }
+
+.hero-copy{ position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:1rem; will-change:transform,opacity; }
+.hero-eyebrow{ font-size:.7rem; letter-spacing:.5em; text-transform:uppercase; color:var(--gold-soft); margin-bottom:1.4rem; }
+.hero-title{ font-family:var(--brand); font-weight:700; line-height:.95; font-size:clamp(3.5rem,15vw,11rem); letter-spacing:.06em; color:#fff; text-shadow:0 0 60px rgba(216,180,106,.45), 0 6px 40px rgba(0,0,0,.6); }
+.hero-tags{ margin-top:1.2rem; font-family:var(--serif); font-style:italic; font-size:clamp(1rem,3vw,1.6rem); color:var(--cream); letter-spacing:.12em; }
+.scroll-cue{ position:absolute; bottom:2.2rem; left:50%; transform:translateX(-50%); z-index:6; font-size:.6rem; letter-spacing:.4em; text-transform:uppercase; color:var(--cream); opacity:.7; display:flex; flex-direction:column; align-items:center; gap:.7rem; }
+.scroll-cue .line{ width:1px; height:42px; background:linear-gradient(var(--gold),transparent); animation:cue 2s var(--ease) infinite; }
+@keyframes cue{ 0%{transform:scaleY(0);transform-origin:top;} 50%{transform:scaleY(1);transform-origin:top;} 51%{transform-origin:bottom;} 100%{transform:scaleY(0);transform-origin:bottom;} }
+
+.inside-welcome{ position:absolute; inset:0; z-index:7; pointer-events:none; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; opacity:0; will-change:opacity,transform; }
+.inside-welcome .w-eyebrow{ font-size:.7rem; letter-spacing:.5em; text-transform:uppercase; color:var(--gold-soft); margin-bottom:1rem; }
+.inside-welcome h2{ font-family:var(--serif); font-size:clamp(2rem,6vw,4rem); font-weight:500; color:#fff; }
+
+/* ============================================================
+   OPTION CARDS
+   ============================================================ */
+#choices{ position:relative; z-index:20; padding:clamp(4rem,10vh,9rem) clamp(1.2rem,4vw,3rem) 6rem; background:radial-gradient(ellipse at 50% 0%, rgba(28,42,99,.5), transparent 55%), linear-gradient(180deg, var(--black), var(--night) 40%, var(--black)); }
+.choices-head{ text-align:center; max-width:680px; margin:0 auto clamp(2.5rem,6vh,4.5rem); }
+.choices-head .eyebrow{ font-size:.65rem; letter-spacing:.45em; text-transform:uppercase; color:var(--gold); }
+.choices-head h2{ font-family:var(--serif); font-weight:500; font-size:clamp(2rem,6vw,3.4rem); margin:.6rem 0 .8rem; }
+.choices-head p{ color:var(--muted); font-size:.95rem; line-height:1.7; font-weight:300; }
+
+.cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:1.4rem; max-width:1200px; margin:0 auto; }
+@media (max-width:980px){ .cards{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:520px){ .cards{ grid-template-columns:1fr; } }
+
+.card{
+  position:relative; border-radius:18px; padding:2.4rem 1.6rem; min-height:300px;
+  background:linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,.015));
+  border:1px solid rgba(216,180,106,.22);
+  display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; cursor:pointer;
+  transform-style:preserve-3d; transition:border-color .5s var(--ease), box-shadow .5s var(--ease); backdrop-filter:blur(6px);
+}
+.card::before{ content:""; position:absolute; inset:0; opacity:0; transition:opacity .5s var(--ease); background:radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(216,180,106,.18), transparent 60%); }
+.card:hover{ border-color:var(--gold); box-shadow:0 30px 60px -25px rgba(0,0,0,.8), 0 0 0 1px rgba(216,180,106,.25); }
+.card:hover::before{ opacity:1; }
+.card .num{ font-family:var(--serif); font-size:.9rem; color:var(--gold); letter-spacing:.2em; }
+.card .icon{ margin:1rem 0 1.3rem; transform:translateZ(40px); }
+.card .icon svg{ width:34px; height:34px; stroke:var(--gold); fill:none; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round; }
+.card h3{ font-family:var(--serif); font-size:1.7rem; font-weight:500; margin-bottom:.5rem; transform:translateZ(30px); }
+.card p{ font-size:.82rem; color:var(--muted); line-height:1.6; font-weight:300; transform:translateZ(20px); }
+.card .go{ margin-top:1.6rem; font-size:.66rem; letter-spacing:.25em; text-transform:uppercase; color:var(--gold-soft); display:flex; align-items:center; gap:.5rem; transform:translateZ(25px); }
+.card .go span{ transition:transform .4s var(--ease); }
+.card:hover .go span{ transform:translateX(6px); }
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+section.block{ position:relative; padding:clamp(4.5rem,12vh,9rem) clamp(1.2rem,5vw,4rem); }
+.block-inner{ max-width:1160px; margin:0 auto; }
+.sec-eyebrow{ font-size:.65rem; letter-spacing:.45em; text-transform:uppercase; color:var(--gold); text-align:center; }
+.sec-title{ font-family:var(--serif); font-weight:500; font-size:clamp(2rem,6vw,3.6rem); text-align:center; margin:.6rem 0 3rem; }
+
+/* MENU */
+#menu{ background:linear-gradient(180deg,var(--black),#0a0d18); }
+.menu-tagline{ max-width:780px; margin:0 auto 2.8rem; text-align:center; font-family:var(--serif); font-style:italic; font-size:clamp(1.05rem,2.4vw,1.5rem); line-height:1.65; color:var(--cream); }
+.menu-tabs{ display:flex; justify-content:center; gap:.7rem; margin-bottom:3rem; flex-wrap:wrap; }
+.menu-tab{ font-family:var(--sans); font-size:.66rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); background:none; border:1px solid rgba(216,180,106,.3); padding:.85rem 1.8rem; border-radius:50px; cursor:pointer; transition:.35s var(--ease); }
+.menu-tab.active{ background:var(--gold); color:var(--black); border-color:var(--gold); }
+.menu-panel{ display:none; }
+.menu-panel.active{ display:block; animation:menuFade .55s var(--ease); }
+@keyframes menuFade{ from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:none;} }
+.menu-cat{ font-family:var(--serif); font-size:clamp(1.5rem,3.5vw,2.1rem); color:var(--gold-soft); letter-spacing:.04em; text-align:center; margin:2.8rem 0 1.6rem; font-weight:500; }
+.menu-cat:first-child{ margin-top:0; }
+.menu-list{ display:grid; grid-template-columns:1fr 1fr; gap:0 3.2rem; max-width:1000px; margin:0 auto; }
+@media (max-width:720px){ .menu-list{ grid-template-columns:1fr; } }
+.menu-list.single{ grid-template-columns:1fr; max-width:640px; }
+.m-item{ display:flex; align-items:baseline; gap:.8rem; padding:.75rem 0; border-bottom:1px solid rgba(255,255,255,.05); }
+.m-item .m-name{ font-family:var(--serif); font-size:1.22rem; color:var(--text); }
+.m-item .m-name small{ display:block; font-family:var(--sans); font-size:.7rem; font-weight:300; color:var(--muted); letter-spacing:.02em; margin-top:.2rem; }
+.m-item .m-dots{ flex:1; border-bottom:1px dotted rgba(216,180,106,.3); transform:translateY(-5px); }
+.m-item .m-price{ font-family:var(--serif); color:var(--gold); font-size:1.18rem; white-space:nowrap; }
+.menu-note{ text-align:center; margin-top:3rem; font-size:.66rem; color:var(--muted); letter-spacing:.2em; text-transform:uppercase; }
+
+/* LOCATION */
+#location{ background:#0a0d18; }
+.loc-grid{ display:grid; grid-template-columns:1fr 1.2fr; gap:clamp(2rem,4vw,4rem); align-items:stretch; }
+@media (max-width:820px){ .loc-grid{ grid-template-columns:1fr; } }
+.loc-info{ display:flex; flex-direction:column; justify-content:center; gap:1.8rem; }
+.loc-item .li-label{ font-size:.6rem; letter-spacing:.35em; text-transform:uppercase; color:var(--gold); margin-bottom:.5rem; }
+.loc-item .li-val{ font-family:var(--serif); font-size:1.35rem; line-height:1.4; }
+.loc-item .li-val small{ display:block; font-size:.85rem; color:var(--muted); font-family:var(--sans); font-weight:300; margin-top:.2rem; }
+.map-wrap{ border-radius:16px; overflow:hidden; min-height:340px; border:1px solid rgba(216,180,106,.2); filter:grayscale(.25) contrast(1.05); }
+.map-wrap iframe{ width:100%; height:100%; min-height:340px; border:0; display:block; }
+
+/* REVIEWS */
+#reviews{ background:linear-gradient(180deg,#0a0d18,var(--black)); text-align:center; }
+.rating-hero{ display:flex; flex-direction:column; align-items:center; gap:.6rem; margin-bottom:3rem; }
+.rating-num{ font-family:var(--serif); font-size:clamp(3.5rem,10vw,6rem); color:#fff; line-height:1; }
+.stars{ display:flex; gap:.35rem; font-size:1.6rem; color:var(--gold); }
+.rating-count{ font-size:.78rem; color:var(--muted); letter-spacing:.1em; }
+/* container where a live Google-reviews widget can be injected */
+#reviewsWidget:empty{ display:none; }
+.reviews-fallback{ max-width:620px; margin:0 auto 2.6rem; }
+.reviews-fallback .stars{ justify-content:center; margin-bottom:1.1rem; }
+.reviews-fallback p{ color:var(--muted); font-size:.98rem; line-height:1.7; font-weight:300; }
+.review-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.4rem; max-width:1120px; margin:0 auto 3rem; text-align:left; align-items:start; }
+@media (max-width:900px){ .review-grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:600px){ .review-grid{ grid-template-columns:1fr; } }
+.rev-card{ background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.012)); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:1.6rem; transition:.4s var(--ease); }
+.rev-card:hover{ border-color:rgba(216,180,106,.35); transform:translateY(-4px); box-shadow:0 24px 50px -28px rgba(0,0,0,.8); }
+.rev-head{ display:flex; align-items:center; gap:.8rem; }
+.rev-av{ width:42px; height:42px; border-radius:50%; display:grid; place-items:center; font-family:var(--serif); font-size:1.2rem; color:#fff; flex:none; }
+.rev-id{ flex:1; min-width:0; }
+.rev-name{ font-size:.92rem; font-weight:500; color:var(--text); }
+.rev-meta{ font-size:.66rem; color:var(--muted); margin-top:.12rem; }
+.rev-g{ width:18px; height:18px; flex:none; }
+.rev-stars{ color:var(--gold); font-size:.85rem; letter-spacing:.12em; margin:1rem 0 .7rem; display:flex; align-items:center; gap:.6rem; }
+.rev-when{ color:var(--muted); font-size:.66rem; letter-spacing:normal; }
+.rev-body{ font-family:var(--serif); font-size:1.06rem; line-height:1.6; color:var(--cream); font-style:italic; }
+
+/* BUTTONS */
+.btn{ display:inline-flex; align-items:center; gap:.7rem; cursor:pointer; font-size:.7rem; letter-spacing:.25em; text-transform:uppercase; padding:1.05rem 2.3rem; border-radius:50px; border:1px solid var(--gold); color:var(--black); background:var(--gold); transition:.45s var(--ease); }
+.btn:hover{ background:transparent; color:var(--gold-soft); box-shadow:0 0 30px rgba(216,180,106,.3); }
+.btn-center{ display:flex; justify-content:center; margin-top:1rem; }
+
+/* FOOTER */
+footer{ background:var(--black); padding:clamp(3rem,7vh,5rem) clamp(1.2rem,5vw,4rem) 2.5rem; border-top:1px solid rgba(216,180,106,.15); text-align:center; }
+footer .f-brand{ font-family:var(--brand); font-size:2.4rem; letter-spacing:.3em; color:#fff; padding-left:.3em; }
+footer .f-tags{ color:var(--muted); font-size:.7rem; letter-spacing:.3em; text-transform:uppercase; margin-top:.8rem; }
+footer .f-social{ display:flex; gap:1.5rem; justify-content:center; margin:2rem 0 1.5rem; flex-wrap:wrap; }
+footer .f-social a{ font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold-soft); transition:.3s; }
+footer .f-social a:hover{ color:#fff; }
+footer .f-copy{ font-size:.62rem; color:#555c6e; letter-spacing:.1em; }
+
+#particles{ position:fixed; inset:0; pointer-events:none; z-index:115; opacity:.5; }
+.reveal{ opacity:0; transform:translateY(40px); transition:opacity 1s var(--ease), transform 1s var(--ease); }
+.reveal.in{ opacity:1; transform:none; }
+@media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+
+<!-- ======================= PRELOADER ======================= -->
+<div id="loader">
+  <div class="loader-word" id="loaderWord"><span>L</span><span>O</span><span>U</span><span>L</span><span>O</span><span>U</span></div>
+  <div class="loader-bar"></div>
+  <div class="loader-sub">Restaurant · Brunch · Café</div>
+</div>
+
+<!-- ======================= NAV ======================= -->
+<header class="nav">
+  <div class="brand">LOULOU</div>
+  <div class="nav-right">
+    <nav>
+      <a href="#choices"  data-i18n="nav_discover">Découvrir</a>
+      <a href="#menu"     data-i18n="nav_menu">La carte</a>
+      <a href="#location" data-i18n="nav_location">Adresse</a>
+      <a href="#reviews"  data-i18n="nav_reviews">Avis</a>
+    </nav>
+    <div class="lang" id="lang">
+      <button data-lang="fr" class="active">FR</button>
+      <button data-lang="en">EN</button>
+    </div>
+  </div>
+</header>
+
+<canvas id="particles"></canvas>
+
+<!-- ======================= SCENE ======================= -->
+<div id="scene">
+  <div class="scene-stage">
+    <div class="layer-interior" id="interior"></div>
+    <canvas id="webgl"></canvas>
+    <div class="layer-exterior" id="exterior" style="display:none"><div class="door-hint"></div></div>
+    <div class="tunnel" id="tunnel"></div>
+
+    <div class="hero-copy" id="heroCopy">
+      <div class="hero-eyebrow" data-i18n="hero_eyebrow">Bienvenue chez</div>
+      <h1 class="hero-title">LOULOU</h1>
+      <div class="hero-tags">Restaurant · Brunch · Café</div>
+    </div>
+
+    <div class="inside-welcome" id="insideWelcome">
+      <div class="w-eyebrow" data-i18n="inside_eyebrow">Entrez</div>
+      <h2 data-i18n="inside_title">Où chaque soirée<br/>devient une occasion</h2>
+    </div>
+
+    <div class="scroll-cue" id="scrollCue">
+      <span data-i18n="scroll_cue">Défilez pour entrer</span>
+      <span class="line"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= CHOICES ======================= -->
+<section id="choices">
+  <div class="choices-head reveal">
+    <div class="eyebrow" data-i18n="choices_eyebrow">Maintenant que vous êtes là</div>
+    <h2 data-i18n="choices_title">Que souhaitez-vous faire ?</h2>
+    <p data-i18n="choices_text">Choisissez votre moment. Réservez votre table, découvrez notre carte, trouvez-nous, ou consultez les avis de nos clients.</p>
+  </div>
+
+  <div class="cards">
+    <a class="card tilt reveal" href="#" id="cardReserve" target="_blank" rel="noopener noreferrer">
+      <div>
+        <div class="num">01</div>
+        <div class="icon"><!-- utensils --><svg viewBox="0 0 24 24"><path d="M6 3v6a2.5 2.5 0 0 0 5 0V3"/><path d="M8.5 9v12"/><path d="M17.5 3c-1.7 0-3 2.2-3 5.5s1.3 4.5 3 4.5"/><path d="M17.5 3v18"/></svg></div>
+        <h3 data-i18n="card1_title">Réserver une table</h3>
+        <p data-i18n="card1_text">Réservez via notre Instagram — un simple message et votre table est prête.</p>
+      </div>
+      <div class="go"><span data-i18n="card1_cta">Nous écrire</span> <span>→</span></div>
+    </a>
+
+    <a class="card tilt reveal" href="#menu">
+      <div>
+        <div class="num">02</div>
+        <div class="icon"><!-- book-open --><svg viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg></div>
+        <h3 data-i18n="card2_title">Voir la carte</h3>
+        <p data-i18n="card2_text">Du brunch du matin aux plats du soir — découvrez la cuisine de LOULOU.</p>
+      </div>
+      <div class="go"><span data-i18n="card2_cta">Voir la carte</span> <span>→</span></div>
+    </a>
+
+    <a class="card tilt reveal" href="#location">
+      <div>
+        <div class="num">03</div>
+        <div class="icon"><!-- map-pin --><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <h3 data-i18n="card3_title">Nous trouver</h3>
+        <p data-i18n="card3_text">Notre adresse, nos horaires et l'itinéraire — jusqu'à notre porte.</p>
+      </div>
+      <div class="go"><span data-i18n="card3_cta">Itinéraire</span> <span>→</span></div>
+    </a>
+
+    <a class="card tilt reveal" href="#reviews">
+      <div>
+        <div class="num">04</div>
+        <div class="icon"><!-- star --><svg viewBox="0 0 24 24"><polygon points="12 2 15.1 8.3 22 9.3 17 14.1 18.2 21 12 17.8 5.8 21 7 14.1 2 9.3 8.9 8.3 12 2"/></svg></div>
+        <h3 data-i18n="card4_title">Avis</h3>
+        <p data-i18n="card4_text">Découvrez ce que pensent nos clients — et laissez votre propre avis sur Google.</p>
+      </div>
+      <div class="go"><span data-i18n="card4_cta">Lire les avis</span> <span>→</span></div>
+    </a>
+  </div>
+</section>
+
+<!-- ======================= MENU ======================= -->
+<section class="block" id="menu">
+  <div class="block-inner">
+    <div class="sec-eyebrow reveal" data-i18n="menu_eyebrow">La cuisine</div>
+    <h2 class="sec-title reveal" data-i18n="menu_title">Notre Carte</h2>
+
+    <p class="menu-tagline reveal" data-i18n="menu_tagline">La cuisine que propose Loulou est une cuisine méditerranéenne, légèrement revisitée, généreuse et moderne, centrée sur le produit et la matière. Loulou c'est avant tout une cuisine joyeuse de partage.</p>
+
+    <div class="menu-tabs reveal">
+      <button class="menu-tab active" data-tab="resto" data-i18n="tab_resto">Restaurant</button>
+      <button class="menu-tab" data-tab="cafe" data-i18n="tab_cafe">Café &amp; Boissons</button>
+    </div>
+
+    <!-- RESTAURANT -->
+    <div class="menu-panel active" data-panel="resto">
+      <h3 class="menu-cat" data-i18n="cat_entree">Entrée</h3>
+      <div class="menu-list">
+        <div class="m-item"><div class="m-name">César Loulou</div><div class="m-dots"></div><div class="m-price">28</div></div>
+        <div class="m-item"><div class="m-name">Tacos mexicain viande hachée</div><div class="m-dots"></div><div class="m-price">26</div></div>
+        <div class="m-item"><div class="m-name">Crevette pannées ou à l'ail</div><div class="m-dots"></div><div class="m-price">36</div></div>
+        <div class="m-item"><div class="m-name">Club sandwich classique</div><div class="m-dots"></div><div class="m-price">24</div></div>
+        <div class="m-item"><div class="m-name">Calamar grillé sauce provençale</div><div class="m-dots"></div><div class="m-price">32</div></div>
+        <div class="m-item"><div class="m-name">Burrata tomate</div><div class="m-dots"></div><div class="m-price">34</div></div>
+      </div>
+
+      <h3 class="menu-cat" data-i18n="cat_plats">Les Plats</h3>
+      <div class="menu-list">
+        <div class="m-item"><div class="m-name">Pavé mérou grillé</div><div class="m-dots"></div><div class="m-price">59</div></div>
+        <div class="m-item"><div class="m-name">Pâtes fruit de mer</div><div class="m-dots"></div><div class="m-price">42</div></div>
+        <div class="m-item"><div class="m-name">Entrecôte de bœuf</div><div class="m-dots"></div><div class="m-price">49</div></div>
+        <div class="m-item"><div class="m-name">Linguini au saumon fumée</div><div class="m-dots"></div><div class="m-price">44</div></div>
+        <div class="m-item"><div class="m-name">Filet de bœuf</div><div class="m-dots"></div><div class="m-price">69</div></div>
+        <div class="m-item"><div class="m-name">Burger frites</div><div class="m-dots"></div><div class="m-price">33</div></div>
+        <div class="m-item"><div class="m-name">Côtelettes agneaux grillées</div><div class="m-dots"></div><div class="m-price">45</div></div>
+        <div class="m-item"><div class="m-name">Escalope grillée sauce champignons</div><div class="m-dots"></div><div class="m-price">30</div></div>
+      </div>
+
+      <h3 class="menu-cat" data-i18n="cat_desert">Désert</h3>
+      <div class="menu-list single">
+        <div class="m-item"><div class="m-name">Profiterole glace vanille</div><div class="m-dots"></div><div class="m-price">20</div></div>
+        <div class="m-item"><div class="m-name">Mousse chocolat glace vanille</div><div class="m-dots"></div><div class="m-price">22</div></div>
+        <div class="m-item"><div class="m-name">Carpaccio fruits de saison</div><div class="m-dots"></div><div class="m-price">25</div></div>
+      </div>
+    </div>
+
+    <!-- CAFÉ & BOISSONS -->
+    <div class="menu-panel" data-panel="cafe">
+      <h3 class="menu-cat" data-i18n="cat_espresso">Espresso</h3>
+      <div class="menu-list">
+        <div class="m-item"><div class="m-name">Espresso</div><div class="m-dots"></div><div class="m-price">4</div></div>
+        <div class="m-item"><div class="m-name">Americano</div><div class="m-dots"></div><div class="m-price">4.5</div></div>
+        <div class="m-item"><div class="m-name">Cortado</div><div class="m-dots"></div><div class="m-price">4.5</div></div>
+        <div class="m-item"><div class="m-name">Latte</div><div class="m-dots"></div><div class="m-price">5</div></div>
+      </div>
+
+      <h3 class="menu-cat" data-i18n="cat_smoothies">Smoothies</h3>
+      <div class="menu-list">
+        <div class="m-item"><div class="m-name">Blueberry Bloom</div><div class="m-dots"></div><div class="m-price">12.5</div></div>
+        <div class="m-item"><div class="m-name">Summer Kiss</div><div class="m-dots"></div><div class="m-price">12.5</div></div>
+        <div class="m-item"><div class="m-name">Dragon Crush</div><div class="m-dots"></div><div class="m-price">12.5</div></div>
+        <div class="m-item"><div class="m-name">Pink Panther</div><div class="m-dots"></div><div class="m-price">12.5</div></div>
+      </div>
+
+      <h3 class="menu-cat" data-i18n="cat_mojito">Mojito Cocktails</h3>
+      <div class="menu-list">
+        <div class="m-item"><div class="m-name">Virgin Mojito</div><div class="m-dots"></div><div class="m-price">7.5</div></div>
+        <div class="m-item"><div class="m-name">Tropical Coco Mojito</div><div class="m-dots"></div><div class="m-price">11.5</div></div>
+        <div class="m-item"><div class="m-name">Blue Mojito</div><div class="m-dots"></div><div class="m-price">11.5</div></div>
+        <div class="m-item"><div class="m-name">Strawberry Mojito</div><div class="m-dots"></div><div class="m-price">11.5</div></div>
+      </div>
+
+      <h3 class="menu-cat" data-i18n="cat_iced">Iced Drinks</h3>
+      <div class="menu-list">
+        <div class="m-item"><div class="m-name">Iced Coffee</div><div class="m-dots"></div><div class="m-price">6.5</div></div>
+        <div class="m-item"><div class="m-name">Lemon Iced Tea</div><div class="m-dots"></div><div class="m-price">8.5</div></div>
+        <div class="m-item"><div class="m-name">Peach Iced Tea</div><div class="m-dots"></div><div class="m-price">8.9</div></div>
+        <div class="m-item"><div class="m-name">Passion Fruit Iced Tea</div><div class="m-dots"></div><div class="m-price">9.5</div></div>
+      </div>
+
+      <h3 class="menu-cat" data-i18n="cat_detox">Detox</h3>
+      <div class="menu-list single">
+        <div class="m-item"><div class="m-name">Green Cleanse<small data-i18n="detox1_desc">concombre, pomme, gingembre</small></div><div class="m-dots"></div><div class="m-price">7.5</div></div>
+        <div class="m-item"><div class="m-name">Berry Boost<small data-i18n="detox2_desc">fruits rouges, citron, menthe</small></div><div class="m-dots"></div><div class="m-price">11.5</div></div>
+      </div>
+    </div>
+
+    <p class="menu-note reveal" data-i18n="menu_note">Tous nos prix sont affichés en dinar tunisien</p>
+  </div>
+</section>
+
+<!-- ======================= LOCATION ======================= -->
+<section class="block" id="location">
+  <div class="block-inner">
+    <div class="sec-eyebrow reveal" data-i18n="loc_eyebrow">Venez nous voir</div>
+    <h2 class="sec-title reveal" data-i18n="loc_title">Trouvez votre chemin</h2>
+
+    <div class="loc-grid">
+      <div class="loc-info reveal">
+        <div class="loc-item">
+          <div class="li-label" data-i18n="loc_addr_label">Adresse</div>
+          <div class="li-val">Loulou Restaurant<small data-i18n="loc_addr_val">Sousse, Tunisie</small></div>
+        </div>
+        <div class="loc-item">
+          <div class="li-label" data-i18n="loc_hours_label">Horaires d'ouverture</div>
+          <div class="li-val" data-i18n="loc_hours_val">Tous les jours · 08:00 – 00:00<small>Brunch servi toute la journée</small></div>
+        </div>
+        <div class="loc-item">
+          <div class="li-label" data-i18n="loc_contact_label">Contact</div>
+          <div class="li-val">@loulourestaurant.tn<small data-i18n="loc_contact_val">Retrouvez-nous sur Instagram</small></div>
+        </div>
+        <a class="btn" id="directionsBtn" href="#" target="_blank" rel="noopener noreferrer"><span data-i18n="loc_directions">Itinéraire</span> →</a>
+      </div>
+
+      <div class="map-wrap reveal">
+        <!-- Keyless, reliable embed (Google blocks framing of its keyless output=embed URL).
+             To use a Google-branded map instead: Google Maps → Partager → Intégrer une carte → paste that iframe here. -->
+        <iframe
+          src="https://www.openstreetmap.org/export/embed.html?bbox=10.6072%2C35.8515%2C10.6152%2C35.8574&layer=mapnik&marker=35.854427%2C10.611178"
+          loading="lazy" referrerpolicy="no-referrer" title="LOULOU Sousse"></iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= REVIEWS ======================= -->
+<section class="block" id="reviews">
+  <div class="block-inner">
+    <div class="sec-eyebrow reveal" data-i18n="rev_eyebrow">Expériences clients</div>
+    <h2 class="sec-title reveal" data-i18n="rev_title">Plébiscité par nos clients</h2>
+
+    <div class="rating-hero reveal" id="ratingHero">
+      <div class="stars">★★★★★</div>
+      <div class="rating-count"><span data-i18n="rev_count">Avis Google de nos clients</span></div>
+    </div>
+
+    <!-- Live Google reviews widget injects here later (replaces the cards below) -->
+    <div id="reviewsWidget"></div>
+
+    <div class="review-grid" id="staticReviews">
+      <article class="rev-card reveal">
+        <div class="rev-head">
+          <div class="rev-av" style="background:#8e44ad">Z</div>
+          <div class="rev-id"><div class="rev-name">Zakia Daoudi</div><div class="rev-meta">Local Guide · 20 avis</div></div>
+          <svg class="rev-g" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+        </div>
+        <div class="rev-stars">★★★★★ <span class="rev-when">il y a 2 semaines</span></div>
+        <p class="rev-body">Super restaurant avec une équipe au top et qui a le sens du service ! C'était super bon, tout le monde a adoré et en plus c'est propre. J'ai hâte d'y retourner 😍</p>
+      </article>
+
+      <article class="rev-card reveal">
+        <div class="rev-head">
+          <div class="rev-av" style="background:#c0392b">B</div>
+          <div class="rev-id"><div class="rev-name">Ben Mohamed Achref</div><div class="rev-meta">3 avis</div></div>
+          <svg class="rev-g" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+        </div>
+        <div class="rev-stars">★★★★★ <span class="rev-when">il y a 3 semaines</span></div>
+        <p class="rev-body">C'est exactement ce qu'il nous fallait à Sousse. Qualité au rendez-vous, personnel très accueillant, ambiance magnifique. Les plats sont à tomber par terre !</p>
+      </article>
+
+      <article class="rev-card reveal">
+        <div class="rev-head">
+          <div class="rev-av" style="background:#16a085">S</div>
+          <div class="rev-id"><div class="rev-name">Seyf Khalifa</div><div class="rev-meta">9 avis</div></div>
+          <svg class="rev-g" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+        </div>
+        <div class="rev-stars">★★★★★ <span class="rev-when">il y a 3 semaines</span></div>
+        <p class="rev-body">Un immense merci à toute l'équipe de Chez Loulou ! Vous avez rendu mes vacances encore plus belles grâce à votre accueil et à votre cuisine. Vous êtes les meilleurs !</p>
+      </article>
+
+      <article class="rev-card reveal">
+        <div class="rev-head">
+          <div class="rev-av" style="background:#2980b9">M</div>
+          <div class="rev-id"><div class="rev-name">Moncef Abdallah</div><div class="rev-meta">Avis Google</div></div>
+          <svg class="rev-g" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+        </div>
+        <div class="rev-stars">★★★★★ <span class="rev-when">il y a 2 heures</span></div>
+        <p class="rev-body">Tout était parfait, le service et le manger. Hâte de revenir !</p>
+      </article>
+
+      <article class="rev-card reveal">
+        <div class="rev-head">
+          <div class="rev-av" style="background:#d35400">M</div>
+          <div class="rev-id"><div class="rev-name">Molka Elabed</div><div class="rev-meta">1 photo</div></div>
+          <svg class="rev-g" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+        </div>
+        <div class="rev-stars">★★★★★ <span class="rev-when">il y a 4 heures</span></div>
+        <p class="rev-body">Une adresse qui coche toutes les cases : des plats délicieux, une ambiance chaleureuse et une expérience qui donne envie de revenir. À tester absolument.</p>
+      </article>
+    </div>
+
+    <div class="btn-center reveal">
+      <a class="btn" id="reviewBtn" href="#" target="_blank" rel="noopener noreferrer"><span data-i18n="rev_cta">Laisser un avis sur Google</span> →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= FOOTER ======================= -->
+<footer>
+  <div class="f-brand">LOULOU</div>
+  <div class="f-tags">Restaurant · Brunch · Café · Sousse</div>
+  <div class="f-social">
+    <a id="igFooter" href="#" target="_blank" rel="noopener noreferrer">Instagram</a>
+    <a id="mapFooter" href="#" target="_blank" rel="noopener noreferrer">Google Maps</a>
+    <a href="#menu" data-i18n="nav_menu">La carte</a>
+  </div>
+  <div class="f-copy">© <span id="year"></span> LOULOU · <span data-i18n="rights">Tous droits réservés</span></div>
+</footer>
+
+<!-- ======================= LIBS ======================= -->
+<script src="assets/images/scene-data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+        integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+        integrity="sha384-g4NTh/Iv5PPU4xPyhEWqPcwtNXOvdaDI8LLnyYfyNZOjKJeYQyjzQ9X5275eBjpt"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"
+        integrity="sha384-Z3REaz79l2IaAZqJsSABtTbhjgOUYyV3p90XNnAPCSHg3EMTz1fouunq9WZRtj3d"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"
+        integrity="sha384-O55L/6rhHr9CFvrxqv5luxOCcmVaBmETbZbJDP+Do8T0pztTACsFBD/IXCNkj7DV"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+/* ============================================================
+   0.  CONFIG  —  your real links (already filled in)
+   ============================================================ */
+const CONFIG = {
+  instagram:    "https://www.instagram.com/loulourestaurant.tn/",
+  googleMaps:   "https://maps.app.goo.gl/hHqXTof5DPQcz3hw9",
+  // Direct "write a review" deep link. Replace YOUR_PLACE_ID with the ChIJ Place ID
+  // (get it free at https://developers.google.com/maps/documentation/places/web-service/place-id).
+  // Until then it opens your Google listing where guests can tap "Write a review".
+  googleReview: "https://maps.app.goo.gl/hHqXTof5DPQcz3hw9",
+  // ⭐ Paste your free Featurable widget ID here to show REAL, auto-updating Google reviews.
+  // Create it at https://featurable.com (connect your Google Business → copy the widget ID).
+  googleReviewsWidget: ""
+};
+document.getElementById('cardReserve').href  = CONFIG.instagram;
+document.getElementById('igFooter').href      = CONFIG.instagram;
+document.getElementById('directionsBtn').href = CONFIG.googleMaps;
+document.getElementById('mapFooter').href     = CONFIG.googleMaps;
+document.getElementById('reviewBtn').href     = CONFIG.googleReview;
+document.getElementById('year').textContent   = new Date().getFullYear();
+
+/* ---- Menu tabs (Restaurant / Café) ---- */
+document.querySelectorAll('.menu-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    const which = tab.dataset.tab;
+    document.querySelectorAll('.menu-tab').forEach(t=> t.classList.toggle('active', t===tab));
+    document.querySelectorAll('.menu-panel').forEach(p=> p.classList.toggle('active', p.dataset.panel===which));
+  });
+});
+
+/* ---- Live Google reviews (Featurable widget) ---- */
+(function reviews(){
+  const id = CONFIG.googleReviewsWidget;
+  if(!id){ return; }                       // keep the fallback message until configured
+  const host = document.getElementById('reviewsWidget');
+  const div  = document.createElement('div');
+  div.id = 'featurable-' + id;
+  div.setAttribute('data-featurable-async','');
+  host.appendChild(div);
+  const s = document.createElement('script');
+  s.defer = true; s.referrerPolicy = 'no-referrer';
+  s.src = 'https://featurable.com/assets/bundle.js';
+  document.body.appendChild(s);
+  // hide the manual cards + rating header once the live widget is on
+  const sc = document.getElementById('staticReviews'); if(sc) sc.style.display = 'none';
+  const rh = document.getElementById('ratingHero');    if(rh) rh.style.display = 'none';
+})();
+
+/* ============================================================
+   1.  i18n  (FR default + EN)
+   ============================================================ */
+const I18N = {
+  fr:{
+    nav_discover:"Découvrir", nav_menu:"La carte", nav_location:"Adresse", nav_reviews:"Avis",
+    hero_eyebrow:"Bienvenue chez", inside_eyebrow:"Entrez", inside_title:"Où chaque soirée<br/>devient une occasion",
+    scroll_cue:"Défilez pour entrer",
+    choices_eyebrow:"Maintenant que vous êtes là", choices_title:"Que souhaitez-vous faire ?",
+    choices_text:"Choisissez votre moment. Réservez votre table, découvrez notre carte, trouvez-nous, ou consultez les avis de nos clients.",
+    card1_title:"Réserver une table", card1_text:"Réservez via notre Instagram — un simple message et votre table est prête.", card1_cta:"Nous écrire",
+    card2_title:"Voir la carte", card2_text:"Du brunch du matin aux plats du soir — découvrez la cuisine de LOULOU.", card2_cta:"Voir la carte",
+    card3_title:"Nous trouver", card3_text:"Notre adresse, nos horaires et l'itinéraire — jusqu'à notre porte.", card3_cta:"Itinéraire",
+    card4_title:"Avis", card4_text:"Découvrez ce que pensent nos clients — et laissez votre propre avis sur Google.", card4_cta:"Lire les avis",
+    menu_eyebrow:"La cuisine", menu_title:"Notre Carte",
+    menu_tagline:"La cuisine que propose Loulou est une cuisine méditerranéenne, légèrement revisitée, généreuse et moderne, centrée sur le produit et la matière. Loulou c'est avant tout une cuisine joyeuse de partage.",
+    tab_resto:"Restaurant", tab_cafe:"Café & Boissons",
+    cat_entree:"Entrée", cat_plats:"Les Plats", cat_desert:"Désert",
+    cat_espresso:"Espresso", cat_smoothies:"Smoothies", cat_mojito:"Mojito Cocktails", cat_iced:"Iced Drinks", cat_detox:"Detox",
+    detox1_desc:"concombre, pomme, gingembre", detox2_desc:"fruits rouges, citron, menthe",
+    menu_note:"Tous nos prix sont affichés en dinar tunisien",
+    loc_eyebrow:"Venez nous voir", loc_title:"Trouvez votre chemin",
+    loc_addr_label:"Adresse", loc_addr_val:"Sousse, Tunisie",
+    loc_hours_label:"Horaires d'ouverture", loc_hours_val:"Tous les jours · 08:00 – 00:00<small>Brunch servi toute la journée</small>",
+    loc_contact_label:"Contact", loc_contact_val:"Retrouvez-nous sur Instagram", loc_directions:"Itinéraire",
+    rev_eyebrow:"Expériences clients", rev_title:"Plébiscité par nos clients",
+    rev_count:"Avis Google de nos clients", rev_cta:"Laisser un avis sur Google", rights:"Tous droits réservés"
+  },
+  en:{
+    nav_discover:"Discover", nav_menu:"Menu", nav_location:"Location", nav_reviews:"Reviews",
+    hero_eyebrow:"Welcome to", inside_eyebrow:"Step inside", inside_title:"Where every evening<br/>feels like an occasion",
+    scroll_cue:"Scroll to enter",
+    choices_eyebrow:"Now that you're in", choices_title:"What would you like to do?",
+    choices_text:"Pick your moment. Reserve your table, explore the menu, find your way to us, or see what our guests are saying.",
+    card1_title:"Reserve a Table", card1_text:"Book through our Instagram — a quick message and your table is set.", card1_cta:"Message us",
+    card2_title:"Browse the Menu", card2_text:"From morning brunch to evening plates — discover the food at LOULOU.", card2_cta:"View menu",
+    card3_title:"Find Us", card3_text:"Our address, opening hours and directions — straight to the front door.", card3_cta:"Get directions",
+    card4_title:"Reviews", card4_text:"See what our guests think — and leave your own review on Google.", card4_cta:"Read reviews",
+    menu_eyebrow:"The kitchen", menu_title:"Our Menu",
+    menu_tagline:"Loulou serves Mediterranean cuisine — lightly reinvented, generous and modern, centred on the produce and the craft. Above all, Loulou is a joyful cuisine made for sharing.",
+    tab_resto:"Restaurant", tab_cafe:"Café & Drinks",
+    cat_entree:"Starters", cat_plats:"Mains", cat_desert:"Dessert",
+    cat_espresso:"Espresso", cat_smoothies:"Smoothies", cat_mojito:"Mojito Cocktails", cat_iced:"Iced Drinks", cat_detox:"Detox",
+    detox1_desc:"cucumber, apple, ginger", detox2_desc:"mixed berries, lemon, mint",
+    menu_note:"All prices are shown in Tunisian dinar",
+    loc_eyebrow:"Come visit", loc_title:"Find your way to us",
+    loc_addr_label:"Address", loc_addr_val:"Sousse, Tunisia",
+    loc_hours_label:"Opening hours", loc_hours_val:"Every day · 08:00 – 00:00<small>Brunch served all day</small>",
+    loc_contact_label:"Contact", loc_contact_val:"Reach us on Instagram", loc_directions:"Get Directions",
+    rev_eyebrow:"Guest experiences", rev_title:"Loved by our guests",
+    rev_count:"Google reviews from our guests", rev_cta:"Leave a Review on Google", rights:"All rights reserved"
+  }
+};
+function setLang(lang){
+  if(lang !== 'fr' && lang !== 'en') lang = 'fr';   // whitelist — never trust stored/URL input
+  const dict = I18N[lang];
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.getAttribute('data-i18n'); if(dict[k]!=null) el.innerHTML = dict[k];
+  });
+  document.querySelectorAll('#lang button').forEach(b=> b.classList.toggle('active', b.dataset.lang===lang));
+  try{ localStorage.setItem('loulou_lang', lang); }catch(e){}
+}
+document.querySelectorAll('#lang button').forEach(b=> b.addEventListener('click',()=> setLang(b.dataset.lang)));
+let savedLang='fr'; try{ const s=localStorage.getItem('loulou_lang'); if(s==='fr'||s==='en') savedLang=s; }catch(e){}
+setLang(savedLang);
+
+/* ============================================================
+   2.  Load photos if present
+   ============================================================ */
+(function loadPhotos(){
+  const test = (src, cb) => { const i=new Image(); i.onload=()=>cb(true); i.onerror=()=>cb(false); i.src=src; };
+  test('assets/images/exterior.jpg', ok=>{ if(ok) document.getElementById('exterior').style.setProperty('--exterior-img', `url('assets/images/exterior.jpg')`); });
+  test('assets/images/interior.jpg', ok=>{ if(ok) document.getElementById('interior').style.setProperty('--interior-img', `url('assets/images/interior.jpg')`); });
+})();
+
+/* ============================================================
+   3.  PRELOADER
+   ============================================================ */
+window.addEventListener('load', ()=>{
+  document.querySelectorAll('#loaderWord span').forEach((l,i)=>{
+    setTimeout(()=>{ l.style.transition='all .8s cubic-bezier(.22,.61,.36,1)'; l.style.opacity='1'; l.style.transform='none'; }, 200 + i*110);
+  });
+  setTimeout(()=>{ document.getElementById('loader').classList.add('done'); document.body.style.overflow=''; initExperience(); }, 2600);
+});
+document.body.style.overflow='hidden';
+
+/* ============================================================
+   4.  EXPERIENCE
+   ============================================================ */
+function initExperience(){
+  const reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const USE_LENIS = true;
+  let lenis;
+  if(USE_LENIS && !reduce && window.Lenis){
+    lenis = new Lenis({ duration:1.2, smoothWheel:true });
+    (function raf(t){ lenis.raf(t); requestAnimationFrame(raf); })();
+  }
+  document.querySelectorAll('a[href^="#"]').forEach(a=>{
+    a.addEventListener('click', e=>{
+      const id=a.getAttribute('href'); if(id.length<2) return;
+      const el=document.querySelector(id); if(!el) return;
+      e.preventDefault(); if(lenis) lenis.scrollTo(el,{offset:0}); else el.scrollIntoView({behavior:'smooth'});
+    });
+  });
+
+  /* ---- the real 3D depth scene (Three.js) ---- */
+  const scene3d = window.THREE ? initScene3D(document.getElementById('webgl')) : null;
+  if(!scene3d){ document.getElementById('exterior').style.display='block'; } // graceful fallback
+
+  if(window.gsap && window.ScrollTrigger){
+    gsap.registerPlugin(ScrollTrigger);
+    if(lenis) lenis.on('scroll', ScrollTrigger.update);
+    const canvas=document.getElementById('webgl'), ext=document.getElementById('exterior'),
+          inter=document.getElementById('interior'), hero=document.getElementById('heroCopy'),
+          inside=document.getElementById('insideWelcome'), cue=document.getElementById('scrollCue'),
+          tunnel=document.getElementById('tunnel');
+
+    // timeline normalized so positions = scroll progress (total duration = 1.0)
+    gsap.timeline({ defaults:{ ease:'none' }, scrollTrigger:{ trigger:'#scene', start:'top top', end:'bottom bottom', scrub:1,
+        onUpdate:self=>{ if(scene3d) scene3d.setProgress(self.progress); } } })
+      .to(hero,{ yPercent:-14, opacity:0, ease:'power1.in', duration:.32 }, 0)
+      .to(cue,{ opacity:0, duration:.10 }, 0)
+      // flat fallback move (only seen if WebGL is unavailable)
+      .to(ext,{ scale:3.4, clipPath:'circle(0% at 50% 56%)', filter:'brightness(1.7)', ease:'power2.in', duration:.8 }, 0)
+      .fromTo(tunnel,{ opacity:0 },{ opacity:.85, ease:'power1.in', duration:.22 }, .56)
+      .to(tunnel,{ opacity:0, ease:'power1.out', duration:.22 }, .78)
+      .fromTo(inside,{ opacity:0, yPercent:8 },{ opacity:1, yPercent:0, ease:'power1.out', duration:.18 }, .46)
+      .to(inside,{ opacity:0, yPercent:-8, ease:'power1.in', duration:.16 }, .72)
+      .fromTo(inter,{ opacity:0, scale:1.12 },{ opacity:1, scale:1, ease:'power1.out', duration:.18 }, .82)
+      .to(canvas,{ opacity:0, ease:'power1.in', duration:.18 }, .82);
+  }
+
+  const io = new IntersectionObserver((entries)=>{ entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold:.18 });
+  document.querySelectorAll('.reveal').forEach((el,i)=>{ el.style.transitionDelay=(i%4*0.08)+'s'; io.observe(el); });
+
+  if(!reduce){
+    document.querySelectorAll('.tilt').forEach(card=>{
+      card.addEventListener('mousemove', e=>{
+        const r=card.getBoundingClientRect(); const px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
+        card.style.transform=`perspective(900px) rotateY(${(px-.5)*12}deg) rotateX(${(.5-py)*12}deg) translateY(-6px)`;
+        card.style.setProperty('--mx', px*100+'%'); card.style.setProperty('--my', py*100+'%');
+      });
+      card.addEventListener('mouseleave', ()=>{ card.style.transform=''; });
+    });
+    window.addEventListener('mousemove', e=>{
+      const x=(e.clientX/innerWidth-.5), y=(e.clientY/innerHeight-.5);
+      if(scene3d) scene3d.setMouse(x,y);
+    });
+  }
+}
+
+/* ============================================================
+   4b.  Three.js depth scene  —  scroll pushes the camera
+        through the doorway using the depth map.
+   ============================================================ */
+function initScene3D(canvas){
+  try{
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, preserveDrawingBuffer:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+    renderer.setClearColor(0x000000, 0);
+
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
+    const IMG_ASPECT = 1102/1084;
+
+    const loader = new THREE.TextureLoader();
+    // Prefer inline data URIs (work everywhere incl. file://); fall back to files.
+    const EXT_SRC = window.LOULOU_EXTERIOR || 'assets/images/exterior.png';
+    const DEP_SRC = window.LOULOU_DEPTH   || 'assets/images/exterior-depth.png';
+    const tex    = loader.load(EXT_SRC);
+    const depth  = loader.load(DEP_SRC);
+    tex.minFilter = depth.minFilter = THREE.LinearFilter;
+
+    const geo = new THREE.PlaneGeometry(IMG_ASPECT, 1, 240, 240);
+    const mat = new THREE.ShaderMaterial({
+      uniforms:{ uTex:{value:tex}, uDepth:{value:depth}, uDisplace:{value:0.0}, uBright:{value:1.0} },
+      vertexShader:`
+        varying vec2 vUv; uniform sampler2D uDepth; uniform float uDisplace;
+        void main(){ vUv = uv;
+          float d = texture2D(uDepth, uv).r;        /* white = near */
+          vec3 p = position; p.z += (d - 0.45) * uDisplace;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }`,
+      fragmentShader:`
+        varying vec2 vUv; uniform sampler2D uTex; uniform float uBright;
+        void main(){ vec4 c = texture2D(uTex, vUv); gl_FragColor = vec4(c.rgb * uBright, 1.0); }`
+    });
+    const mesh = new THREE.Mesh(geo, mat); scene.add(mesh);
+
+    const D0 = 1.25, DEND = 0.16;
+    let coverScale = 1, progress = 0, target = 0, mx = 0, my = 0, tmx = 0, tmy = 0;
+
+    function resize(){
+      const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w/h; camera.updateProjectionMatrix();
+      const visH  = 2*Math.tan(THREE.MathUtils.degToRad(camera.fov)/2)*D0;
+      coverScale  = Math.max(visH, (visH*camera.aspect)/IMG_ASPECT) * 1.05;
+      mesh.scale.set(coverScale, coverScale, 1);
+    }
+    resize(); window.addEventListener('resize', resize);
+
+    (function animate(){
+      progress += (target - progress)*0.10;
+      tmx += (mx - tmx)*0.06; tmy += (my - tmy)*0.06;
+      const p = progress;
+      camera.position.z = D0 - p*(D0 - DEND);
+      camera.position.x =  tmx * 0.10 * (1 - p*0.6);
+      camera.position.y = -tmy * 0.10 * (1 - p*0.6);
+      camera.lookAt(0, 0, 0);
+      mat.uniforms.uDisplace.value = coverScale * (0.42 + p*0.22);
+      mat.uniforms.uBright.value   = 1.0 + p*0.25;
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    })();
+
+    return {
+      setProgress:v=>{ target = Math.max(0, Math.min(1, v)); },
+      setMouse:(x,y)=>{ mx = x; my = y; }
+    };
+  }catch(e){ console.warn('WebGL scene unavailable:', e); return null; }
+}
+
+/* ============================================================
+   5.  Ambient gold particles
+   ============================================================ */
+(function particles(){
+  const c=document.getElementById('particles'), x=c.getContext('2d'); let w,h,parts;
+  function size(){ w=c.width=innerWidth; h=c.height=innerHeight; }
+  function make(){ parts=Array.from({length: innerWidth<700?26:55},()=>({ x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.8+.3, s:Math.random()*.4+.1, o:Math.random()*.5+.2 })); }
+  function loop(){ x.clearRect(0,0,w,h); parts.forEach(p=>{ p.y-=p.s; if(p.y<-5){ p.y=h+5; p.x=Math.random()*w; } x.beginPath(); x.arc(p.x,p.y,p.r,0,7); x.fillStyle=`rgba(216,180,106,${p.o})`; x.fill(); }); requestAnimationFrame(loop); }
+  size(); make(); loop(); addEventListener('resize',()=>{ size(); make(); });
+})();
+</script>
+</body>
+</html>

@@ -14,7 +14,7 @@
 
 <style>
 /* ============================================================
-   LOULOU — couleurs du thème
+   LOULOU — theme colors
    ============================================================ */
 :root{
   --black:      #07090f;
@@ -203,7 +203,7 @@ section.block{ position:relative; padding:clamp(4.5rem,12vh,9rem) clamp(1.2rem,5
 .rating-num{ font-family:var(--serif); font-size:clamp(3.5rem,10vw,6rem); color:#fff; line-height:1; }
 .stars{ display:flex; gap:.35rem; font-size:1.6rem; color:var(--gold); }
 .rating-count{ font-size:.78rem; color:var(--muted); letter-spacing:.1em; }
-/* zone du widget avis */
+/* reviews widget slot */
 #reviewsWidget:empty{ display:none; }
 .reviews-fallback{ max-width:620px; margin:0 auto 2.6rem; }
 .reviews-fallback .stars{ justify-content:center; margin-bottom:1.1rem; }
@@ -462,7 +462,7 @@ footer .f-copy{ font-size:.62rem; color:#555c6e; letter-spacing:.1em; }
       </div>
 
       <div class="map-wrap reveal">
-        <!-- carte OSM (Google bloque l'iframe sans clé API) -->
+        <!-- OSM map (Google blocks the iframe without an API key) -->
         <iframe
           src="https://www.openstreetmap.org/export/embed.html?bbox=10.6072%2C35.8515%2C10.6152%2C35.8574&layer=mapnik&marker=35.854427%2C10.611178"
           loading="lazy" referrerpolicy="no-referrer" title="LOULOU Sousse"></iframe>
@@ -482,7 +482,7 @@ footer .f-copy{ font-size:.62rem; color:#555c6e; letter-spacing:.1em; }
       <div class="rating-count"><span data-i18n="rev_count">Avis Google de nos clients</span></div>
     </div>
 
-    <!-- widget avis Google (remplace les cartes) -->
+    <!-- Google reviews widget (replaces the cards) -->
     <div id="reviewsWidget"></div>
 
     <div class="review-grid" id="staticReviews">
@@ -577,8 +577,8 @@ footer .f-copy{ font-size:.62rem; color:#555c6e; letter-spacing:.1em; }
 const CONFIG = {
   instagram:    "https://www.instagram.com/loulourestaurant.tn/",
   googleMaps:   "https://maps.app.goo.gl/hHqXTof5DPQcz3hw9",
-  googleReview: "https://maps.app.goo.gl/hHqXTof5DPQcz3hw9",   // Place ID de la fiche pour le lien avis
-  googleReviewsWidget: ""                                      // id widget Featurable (avis en direct)
+  googleReview: "https://maps.app.goo.gl/hHqXTof5DPQcz3hw9",   // place ID for the review link
+  googleReviewsWidget: ""                                      // Featurable widget id (live reviews)
 };
 document.getElementById('cardReserve').href  = CONFIG.instagram;
 document.getElementById('igFooter').href      = CONFIG.instagram;
@@ -587,7 +587,7 @@ document.getElementById('mapFooter').href     = CONFIG.googleMaps;
 document.getElementById('reviewBtn').href     = CONFIG.googleReview;
 document.getElementById('year').textContent   = new Date().getFullYear();
 
-/* onglets de la carte */
+/* menu tabs */
 document.querySelectorAll('.menu-tab').forEach(tab=>{
   tab.addEventListener('click', ()=>{
     const which = tab.dataset.tab;
@@ -596,10 +596,10 @@ document.querySelectorAll('.menu-tab').forEach(tab=>{
   });
 });
 
-/* avis Google (widget Featurable) */
+/* Google reviews (Featurable widget) */
 (function reviews(){
   const id = CONFIG.googleReviewsWidget;
-  if(!id){ return; }                       // pas d'id → on garde les cartes en dur
+  if(!id){ return; }                       // no id -> keep the static cards
   const host = document.getElementById('reviewsWidget');
   const div  = document.createElement('div');
   div.id = 'featurable-' + id;
@@ -609,7 +609,7 @@ document.querySelectorAll('.menu-tab').forEach(tab=>{
   s.defer = true; s.referrerPolicy = 'no-referrer';
   s.src = 'https://featurable.com/assets/bundle.js';
   document.body.appendChild(s);
-  // widget actif → on cache les cartes en dur
+  // widget on -> hide the static cards
   const sc = document.getElementById('staticReviews'); if(sc) sc.style.display = 'none';
   const rh = document.getElementById('ratingHero');    if(rh) rh.style.display = 'none';
 })();
@@ -668,7 +668,7 @@ const I18N = {
   }
 };
 function setLang(lang){
-  if(lang !== 'fr' && lang !== 'en') lang = 'fr';   // on force fr/en
+  if(lang !== 'fr' && lang !== 'en') lang = 'fr';   // force fr/en
   const dict = I18N[lang];
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i18n]').forEach(el=>{
@@ -682,7 +682,7 @@ let savedLang='fr'; try{ const s=localStorage.getItem('loulou_lang'); if(s==='fr
 setLang(savedLang);
 
 /* ============================================================
-   2.  photos (si présentes)
+   2.  photos (if present)
    ============================================================ */
 (function loadPhotos(){
   const test = (src, cb) => { const i=new Image(); i.onload=()=>cb(true); i.onerror=()=>cb(false); i.src=src; };
@@ -720,9 +720,9 @@ function initExperience(){
     });
   });
 
-  /* ---- scène 3D (Three.js) ---- */
+  /* 3D scene (Three.js) */
   const scene3d = window.THREE ? initScene3D(document.getElementById('webgl')) : null;
-  if(!scene3d){ document.getElementById('exterior').style.display='block'; } // pas de WebGL → image simple
+  if(!scene3d){ document.getElementById('exterior').style.display='block'; } // no WebGL -> flat image
 
   if(window.gsap && window.ScrollTrigger){
     gsap.registerPlugin(ScrollTrigger);
@@ -732,12 +732,12 @@ function initExperience(){
           inside=document.getElementById('insideWelcome'), cue=document.getElementById('scrollCue'),
           tunnel=document.getElementById('tunnel');
 
-    // positions = progression du scroll (durée totale 1)
+    // positions = scroll progress (total 1)
     gsap.timeline({ defaults:{ ease:'none' }, scrollTrigger:{ trigger:'#scene', start:'top top', end:'bottom bottom', scrub:1,
         onUpdate:self=>{ if(scene3d) scene3d.setProgress(self.progress); } } })
       .to(hero,{ yPercent:-14, opacity:0, ease:'power1.in', duration:.32 }, 0)
       .to(cue,{ opacity:0, duration:.10 }, 0)
-      // fallback sans WebGL
+      // fallback without WebGL
       .to(ext,{ scale:3.4, clipPath:'circle(0% at 50% 56%)', filter:'brightness(1.7)', ease:'power2.in', duration:.8 }, 0)
       .fromTo(tunnel,{ opacity:0 },{ opacity:.85, ease:'power1.in', duration:.22 }, .56)
       .to(tunnel,{ opacity:0, ease:'power1.out', duration:.22 }, .78)
@@ -767,7 +767,7 @@ function initExperience(){
 }
 
 /* ============================================================
-   4b.  scène 3D — la depth map fait avancer la caméra dans la porte
+   4b.  3D scene — depth map drives the camera through the door
    ============================================================ */
 function initScene3D(canvas){
   try{
@@ -780,7 +780,7 @@ function initScene3D(canvas){
     const IMG_ASPECT = 1102/1084;
 
     const loader = new THREE.TextureLoader();
-    // data URI inline si présent, sinon les fichiers
+    // inline data URI if present, else the files
     const EXT_SRC = window.LOULOU_EXTERIOR || 'assets/images/exterior.png';
     const DEP_SRC = window.LOULOU_DEPTH   || 'assets/images/exterior-depth.png';
     const tex    = loader.load(EXT_SRC);
@@ -837,7 +837,7 @@ function initScene3D(canvas){
 }
 
 /* ============================================================
-   5.  particules dorées
+   5.  gold particles
    ============================================================ */
 (function particles(){
   const c=document.getElementById('particles'), x=c.getContext('2d'); let w,h,parts;

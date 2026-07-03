@@ -1,59 +1,59 @@
-# Loulou — site web
+# Loulou — website
 
-Le site de Loulou (restaurant · brunch · café, à Sousse). Une seule page, pas de
-framework, pas de build : c'est du HTML/CSS/JS. On ouvre `index.html` et ça tourne
-(il faut internet pour les polices et les librairies d'animation).
+The website for Loulou (restaurant · brunch · café, in Sousse). Single page, no
+framework, no build step — it's just HTML/CSS/JS. Open `index.html` and it runs
+(needs internet for the fonts and the animation libraries).
 
-L'idée de départ : on arrive sur la façade de nuit, et dès qu'on scrolle la caméra
-rentre par la porte dans la salle. Après ça, 4 cartes : Réserver, Carte, Adresse, Avis.
-Le site est en français par défaut, avec un bouton FR/EN en haut à droite.
+The idea: you land on the night façade, and as soon as you scroll the camera moves
+through the door into the dining room. After that, 4 cards: Reserve, Menu, Location,
+Reviews. The site is in French by default, with a FR/EN switch top right.
 
-## Ce qui est déjà branché
-- Bouton « Réserver » → Instagram (loulourestaurant.tn)
-- Adresse / itinéraire → fiche Google « Loulou Restaurant Sousse »
-- La carte de localisation → OpenStreetMap (Google bloque l'intégration sans clé API,
-  du coup je suis passé par OSM qui marche partout)
+## What's already wired up
+- "Reserve" button → Instagram (loulourestaurant.tn)
+- Address / directions → Google listing "Loulou Restaurant Sousse"
+- The location map → OpenStreetMap (Google blocks its iframe without an API key, so I
+  went with OSM, which works everywhere)
 
-## Les images de la scène 3D
-La façade et sa carte de profondeur sont intégrées directement dans
-`assets/images/scene-data.js`. C'est fait exprès : comme ça le WebGL marche partout,
-même quand on ouvre le fichier en local. Si un jour je change la photo de façade, il
-faut regénérer ce fichier (photo + depth map, faite sur immersity.ai ou Depth Anything).
+## The 3D scene images
+The façade and its depth map are embedded directly into
+`assets/images/scene-data.js`. That's on purpose: it makes the WebGL work everywhere,
+even when opening the file locally. If I ever change the façade photo, I have to
+regenerate that file (photo + depth map, made on immersity.ai or Depth Anything).
 
-## Le menu
-Carte complète en onglets (Restaurant / Café & Boissons), avec les vrais plats et les
-prix en dinar tunisien.
+## The menu
+Full menu in tabs (Restaurant / Café & Drinks), with the real dishes and prices in
+Tunisian dinar.
 
-## Les avis Google
-Pour l'instant ce sont de vrais avis affichés en dur (les cartes façon Google). Pour les
-passer en direct (mis à jour tout seuls) :
+## Google reviews
+For now these are real reviews shown as static cards (the Google-style ones). To make
+them live (auto-updating on their own):
 
-1. compte gratuit sur featurable.com
-2. connecter la fiche Google « Loulou Restaurant Sousse »
-3. créer un widget et copier son Widget ID
-4. le coller dans `index.html` → `CONFIG.googleReviewsWidget`
+1. free account on featurable.com
+2. connect the Google listing "Loulou Restaurant Sousse"
+3. create a widget and copy its Widget ID
+4. paste it into `index.html` → `CONFIG.googleReviewsWidget`
 
-À partir de là le widget prend la place des cartes en dur. Je passe par un widget parce
-que l'API Google directe demande une clé + un serveur et ne renvoie que 5 avis max.
+From there the widget takes the place of the static cards. I went with a widget because
+the direct Google API needs a key + a server and only returns 5 reviews max.
 
-Pour le lien « laisser un avis » direct, il suffit de mettre le Place ID de la fiche dans
+For the direct "leave a review" link, just drop the listing's Place ID into
 `CONFIG.googleReview`.
 
-## Sécurité
-Quelques trucs auxquels j'ai fait attention :
+## Security
+A few things I paid attention to:
 
-- SRI sur les librairies CDN (three.js, gsap, lenis) : si un CDN se fait pirater, le code
-  modifié ne s'exécute pas.
-- Fichier `_headers` (CSP, anti-clickjacking, referrer, permissions, HSTS) — appliqué
-  automatiquement sur Netlify / Cloudflare Pages. Sur GitHub Pages ces en-têtes ne
-  s'appliquent pas (Pages ne gère pas les en-têtes custom).
-- `rel="noopener noreferrer"` sur tous les liens externes.
-- La langue stockée en localStorage est validée (fr/en seulement).
+- SRI on the CDN libraries (three.js, gsap, lenis): if a CDN gets hacked, the modified
+  code won't run.
+- `_headers` file (CSP, anti-clickjacking, referrer, permissions, HSTS) — applied
+  automatically on Netlify / Cloudflare Pages. On GitHub Pages these headers don't apply
+  (Pages doesn't support custom headers).
+- `rel="noopener noreferrer"` on all external links.
+- The language stored in localStorage is validated (fr/en only).
 
-Pas de formulaire, pas de cookie, rien de sensible côté client.
+No forms, no cookies, nothing sensitive on the client side.
 
-## Mise en ligne
-C'est un site statique, ça se met en ligne à peu près n'importe où :
+## Going live
+It's a static site, so it can be hosted just about anywhere:
 
-- Netlify Drop (glisser le dossier) — garde le fichier `_headers`.
-- GitHub Pages — `git push` puis activer Pages sur la branche `main`.
+- Netlify Drop (drag the folder) — keeps the `_headers` file.
+- GitHub Pages — `git push`, then enable Pages on the `main` branch.

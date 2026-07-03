@@ -14,7 +14,7 @@
 
 <style>
 /* ============================================================
-   LOULOU — theme tokens (pulled from the restaurant photos)
+   LOULOU — couleurs du thème
    ============================================================ */
 :root{
   --black:      #07090f;
@@ -203,7 +203,7 @@ section.block{ position:relative; padding:clamp(4.5rem,12vh,9rem) clamp(1.2rem,5
 .rating-num{ font-family:var(--serif); font-size:clamp(3.5rem,10vw,6rem); color:#fff; line-height:1; }
 .stars{ display:flex; gap:.35rem; font-size:1.6rem; color:var(--gold); }
 .rating-count{ font-size:.78rem; color:var(--muted); letter-spacing:.1em; }
-/* container where a live Google-reviews widget can be injected */
+/* zone du widget avis */
 #reviewsWidget:empty{ display:none; }
 .reviews-fallback{ max-width:620px; margin:0 auto 2.6rem; }
 .reviews-fallback .stars{ justify-content:center; margin-bottom:1.1rem; }
@@ -462,8 +462,7 @@ footer .f-copy{ font-size:.62rem; color:#555c6e; letter-spacing:.1em; }
       </div>
 
       <div class="map-wrap reveal">
-        <!-- Keyless, reliable embed (Google blocks framing of its keyless output=embed URL).
-             To use a Google-branded map instead: Google Maps → Partager → Intégrer une carte → paste that iframe here. -->
+        <!-- carte OSM (Google bloque l'iframe sans clé API) -->
         <iframe
           src="https://www.openstreetmap.org/export/embed.html?bbox=10.6072%2C35.8515%2C10.6152%2C35.8574&layer=mapnik&marker=35.854427%2C10.611178"
           loading="lazy" referrerpolicy="no-referrer" title="LOULOU Sousse"></iframe>
@@ -483,7 +482,7 @@ footer .f-copy{ font-size:.62rem; color:#555c6e; letter-spacing:.1em; }
       <div class="rating-count"><span data-i18n="rev_count">Avis Google de nos clients</span></div>
     </div>
 
-    <!-- Live Google reviews widget injects here later (replaces the cards below) -->
+    <!-- widget avis Google (remplace les cartes) -->
     <div id="reviewsWidget"></div>
 
     <div class="review-grid" id="staticReviews">
@@ -573,18 +572,13 @@ footer .f-copy{ font-size:.62rem; color:#555c6e; letter-spacing:.1em; }
 
 <script>
 /* ============================================================
-   0.  CONFIG  —  your real links (already filled in)
+   0.  CONFIG
    ============================================================ */
 const CONFIG = {
   instagram:    "https://www.instagram.com/loulourestaurant.tn/",
   googleMaps:   "https://maps.app.goo.gl/hHqXTof5DPQcz3hw9",
-  // Direct "write a review" deep link. Replace YOUR_PLACE_ID with the ChIJ Place ID
-  // (get it free at https://developers.google.com/maps/documentation/places/web-service/place-id).
-  // Until then it opens your Google listing where guests can tap "Write a review".
-  googleReview: "https://maps.app.goo.gl/hHqXTof5DPQcz3hw9",
-  // ⭐ Paste your free Featurable widget ID here to show REAL, auto-updating Google reviews.
-  // Create it at https://featurable.com (connect your Google Business → copy the widget ID).
-  googleReviewsWidget: ""
+  googleReview: "https://maps.app.goo.gl/hHqXTof5DPQcz3hw9",   // Place ID de la fiche pour le lien avis
+  googleReviewsWidget: ""                                      // id widget Featurable (avis en direct)
 };
 document.getElementById('cardReserve').href  = CONFIG.instagram;
 document.getElementById('igFooter').href      = CONFIG.instagram;
@@ -593,7 +587,7 @@ document.getElementById('mapFooter').href     = CONFIG.googleMaps;
 document.getElementById('reviewBtn').href     = CONFIG.googleReview;
 document.getElementById('year').textContent   = new Date().getFullYear();
 
-/* ---- Menu tabs (Restaurant / Café) ---- */
+/* onglets de la carte */
 document.querySelectorAll('.menu-tab').forEach(tab=>{
   tab.addEventListener('click', ()=>{
     const which = tab.dataset.tab;
@@ -602,10 +596,10 @@ document.querySelectorAll('.menu-tab').forEach(tab=>{
   });
 });
 
-/* ---- Live Google reviews (Featurable widget) ---- */
+/* avis Google (widget Featurable) */
 (function reviews(){
   const id = CONFIG.googleReviewsWidget;
-  if(!id){ return; }                       // keep the fallback message until configured
+  if(!id){ return; }                       // pas d'id → on garde les cartes en dur
   const host = document.getElementById('reviewsWidget');
   const div  = document.createElement('div');
   div.id = 'featurable-' + id;
@@ -615,7 +609,7 @@ document.querySelectorAll('.menu-tab').forEach(tab=>{
   s.defer = true; s.referrerPolicy = 'no-referrer';
   s.src = 'https://featurable.com/assets/bundle.js';
   document.body.appendChild(s);
-  // hide the manual cards + rating header once the live widget is on
+  // widget actif → on cache les cartes en dur
   const sc = document.getElementById('staticReviews'); if(sc) sc.style.display = 'none';
   const rh = document.getElementById('ratingHero');    if(rh) rh.style.display = 'none';
 })();
@@ -674,7 +668,7 @@ const I18N = {
   }
 };
 function setLang(lang){
-  if(lang !== 'fr' && lang !== 'en') lang = 'fr';   // whitelist — never trust stored/URL input
+  if(lang !== 'fr' && lang !== 'en') lang = 'fr';   // on force fr/en
   const dict = I18N[lang];
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i18n]').forEach(el=>{
@@ -688,7 +682,7 @@ let savedLang='fr'; try{ const s=localStorage.getItem('loulou_lang'); if(s==='fr
 setLang(savedLang);
 
 /* ============================================================
-   2.  Load photos if present
+   2.  photos (si présentes)
    ============================================================ */
 (function loadPhotos(){
   const test = (src, cb) => { const i=new Image(); i.onload=()=>cb(true); i.onerror=()=>cb(false); i.src=src; };
@@ -726,9 +720,9 @@ function initExperience(){
     });
   });
 
-  /* ---- the real 3D depth scene (Three.js) ---- */
+  /* ---- scène 3D (Three.js) ---- */
   const scene3d = window.THREE ? initScene3D(document.getElementById('webgl')) : null;
-  if(!scene3d){ document.getElementById('exterior').style.display='block'; } // graceful fallback
+  if(!scene3d){ document.getElementById('exterior').style.display='block'; } // pas de WebGL → image simple
 
   if(window.gsap && window.ScrollTrigger){
     gsap.registerPlugin(ScrollTrigger);
@@ -738,12 +732,12 @@ function initExperience(){
           inside=document.getElementById('insideWelcome'), cue=document.getElementById('scrollCue'),
           tunnel=document.getElementById('tunnel');
 
-    // timeline normalized so positions = scroll progress (total duration = 1.0)
+    // positions = progression du scroll (durée totale 1)
     gsap.timeline({ defaults:{ ease:'none' }, scrollTrigger:{ trigger:'#scene', start:'top top', end:'bottom bottom', scrub:1,
         onUpdate:self=>{ if(scene3d) scene3d.setProgress(self.progress); } } })
       .to(hero,{ yPercent:-14, opacity:0, ease:'power1.in', duration:.32 }, 0)
       .to(cue,{ opacity:0, duration:.10 }, 0)
-      // flat fallback move (only seen if WebGL is unavailable)
+      // fallback sans WebGL
       .to(ext,{ scale:3.4, clipPath:'circle(0% at 50% 56%)', filter:'brightness(1.7)', ease:'power2.in', duration:.8 }, 0)
       .fromTo(tunnel,{ opacity:0 },{ opacity:.85, ease:'power1.in', duration:.22 }, .56)
       .to(tunnel,{ opacity:0, ease:'power1.out', duration:.22 }, .78)
@@ -773,8 +767,7 @@ function initExperience(){
 }
 
 /* ============================================================
-   4b.  Three.js depth scene  —  scroll pushes the camera
-        through the doorway using the depth map.
+   4b.  scène 3D — la depth map fait avancer la caméra dans la porte
    ============================================================ */
 function initScene3D(canvas){
   try{
@@ -787,7 +780,7 @@ function initScene3D(canvas){
     const IMG_ASPECT = 1102/1084;
 
     const loader = new THREE.TextureLoader();
-    // Prefer inline data URIs (work everywhere incl. file://); fall back to files.
+    // data URI inline si présent, sinon les fichiers
     const EXT_SRC = window.LOULOU_EXTERIOR || 'assets/images/exterior.png';
     const DEP_SRC = window.LOULOU_DEPTH   || 'assets/images/exterior-depth.png';
     const tex    = loader.load(EXT_SRC);
@@ -844,7 +837,7 @@ function initScene3D(canvas){
 }
 
 /* ============================================================
-   5.  Ambient gold particles
+   5.  particules dorées
    ============================================================ */
 (function particles(){
   const c=document.getElementById('particles'), x=c.getContext('2d'); let w,h,parts;
